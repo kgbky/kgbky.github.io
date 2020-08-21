@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>羽毛的博客-EventBus源码分析</title>
+</head>
+
+<body>
+	<div id="main">
+		<h1>EventBus源码分析</h1>
+		<h2>EventBus是什么？</h2>
+		<p>
+			EventBus是适用于Android和Java的发布/订阅事件总线。使用EventBus可以快速方便的实现观察者模式。
+		<ul>
+			<li>它简化了组件间的通信。</li>
+			<li>事件的发送者和接受者完全解耦。</li>
+			<li>避免了复杂的生命周期问题。</li>
+		</ul>
+		</p>
+
+		<h2>EventBus怎么用</h2>
+
+		<p>分析源码之前，我们先熟悉一下EventBus的用法。
+			<a href="https://github.com/greenrobot/EventBus">点我打开官网。</a>
+			首先看到下图：
+		</p>
+
+		<img src="images/image3.png" alt="" style="display: block; height: 260px; width: 660px;">
+
+		<p>Publisher(发布者)把Event(事件)post(发送)给EventBus,
+			EventBus把Event传递给Subscriber(订阅者)的 onEvent方法。我们先有一个大概印象，到下面源码分析部分，再回过头来理解这张图。</p>
+
+		<p>继续往下看，EventBus的使用分为三步：</p>
+
+		<ul>
+			<li>1.定义事件:</li>
+			<img src="images/image7.png">
+
+			<li>2.注册订阅者和订阅方法</li>
+			<img src="images/image4.jpg">
+			<br>
+			<img src="images/image5.png">
+
+			<li>3.发送事件</li>
+			<img src="images/image6.png">
+		</ul>
+
+
+		<h2>EventBus源码分析</h2>
+		<p>我们该从哪里开始分析源码呢？试着从我们最熟悉最常用的代码开始，从EventBus的使用步骤开始。
+			第一步，定义Event很简单。我们到第二步：
+		</p>
+
+
+		<img src="images/image8.jpg" style="display: block;width: 800px;">
+
+		<p>在图上位置打上断点，进入debug模式一步步查看代码是如何运行的。最先进入的是getDefault()方法</p>
+
+		<img src="images/image9.png" style="display: block;width: 800px;">
+
+		<p>该方法是一个单例模式，synchronized关键字保证了改方法的线程安全。另外
+			<strong>defaultInstance</strong>变量使用<strong>volatile</strong>关键字修饰。
+			volatile修饰的变量对它的修改会立刻刷新到主存，比synchronized和Lock开销小。感兴趣的小伙伴请查阅其他资料。</p>
+
+		<p>getDefault()返回EventBus实例，接下来我们进入register()</p>
+
+		<img src="images/image10.png" style="display: block;width: 800px;">
+
+		<p>register方法接收一个订阅者，在本次调试用是一个Activity。
+			register方法内部通过<strong>subscriberMethodFinder</strong>类的对象找到订阅者所有的订阅方法，
+			就是使用<strong>Subscrib</strong>注解修饰的方法。</p>
+
+		<p>继续往下看，源码里遍历调用subscribe方法，我们debug进入该方法：</p>
+
+		<img src="images/image11.png" style="display: block;width: 800px;">
+
+		<p>该方法接受两个参数，第一个参数是订阅者，
+			第二个参数是SubscriberMethod类的对象，SubscriberMethod表示订阅者内部的订阅方法。
+			把两个参数封装为一个Subscription类的对象。
+		</p>
+	</div>
+
+</body>
+
+</html>
