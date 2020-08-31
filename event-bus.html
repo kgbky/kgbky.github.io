@@ -32,7 +32,7 @@
 		<p>Publisher(发布者)把Event(事件)post(发送)给EventBus,
 			EventBus把Event传递给Subscriber(订阅者)的 onEvent方法。我们先有一个大概印象，到下面源码分析部分，再回过头来理解这张图。</p>
 
-			<br/>
+		<br />
 
 		<p>继续往下看，EventBus的使用分为三步：</p>
 
@@ -42,7 +42,7 @@
 
 			<li>2.注册订阅者和订阅方法</li>
 			<img src="images/image4.jpg">
-			<br/>
+			<br />
 			<img src="images/image5.png">
 
 			<li>3.发送事件</li>
@@ -56,33 +56,33 @@
 
 		<br>
 
-		<img src="images/image8.jpg" style="display: block;width: 1000px;">
+		<img src="images/image8.jpg" style="display: block;" height: auto;width：100%;>
 
 		<p>在图上位置打上断点，进入debug模式一步步查看代码是如何运行的。最先进入的是getDefault()方法</p>
 
 		<br>
 
-		<img src="images/image9.png" style="display: block;width: 1000px;">
+		<img src="images/image9.png" style="display: block;" height: auto;width：100%;>
 
 		<p>该方法采用单例模式，synchronized关键字保证了线程安全。另外
 			<strong>defaultInstance</strong>变量使用<strong>volatile</strong>关键字修饰。
 			volatile修饰的变量对它的修改会立刻刷新到主存，比synchronized和Lock开销小。感兴趣的小伙伴请查阅其他资料。</p>
 
-			<br>
+		<br>
 
 		<p>getDefault()返回EventBus实例，继续debug进入register()</p>
 
-		<img src="images/image10.png" style="display: block;width: 1000px;">
+		<img src="images/image10.png" style="display: block;" height: auto;width：100%;>
 
 		<p>register方法接收一个订阅者，在本次调试中就是一个MainActivity的实例。
 			register方法内部通过<strong>subscriberMethodFinder</strong>类的对象找到订阅者所有的订阅方法，
 			就是使用<strong>Subscrib</strong>注解修饰的方法。</p>
 
-			<br>
+		<br>
 
 		<p>继续往下看，源码里遍历调用subscribe方法，我们debug进入该方法：</p>
 
-		<img src="images/image11.png" style="display: block;width: 1000px;">
+		<img src="images/image11.png" style="display: block;" height: auto;width：100%;>
 
 		<p>该方法接受两个参数，第一个参数是订阅者，
 			第二个参数是SubscriberMethod类的对象，SubscriberMethod表示订阅者内部的订阅方法。
