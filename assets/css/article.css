@@ -197,13 +197,14 @@ input, select, textarea {
 
 	h1 {
 		font-size: 4rem;
-		line-height: 1.1;
+		line-height: 3.0;
 		margin: 0 0 2rem 0;
+		text-align: center;
 	}
 
 	h2 {
 		font-size: 1.75rem;
-		line-height: 1.3;
+		line-height: 2.0;
 		margin: 0 0 1.5rem 0;
 	}
 
@@ -265,16 +266,6 @@ input, select, textarea {
 			overflow-x: auto;
 		}
 
-	hr {
-		border: 0;
-		border-bottom: solid 2px;
-		margin: 3rem 0;
-	}
-
-		hr.major {
-			margin: 5rem 0;
-		}
-
 	.align-left {
 		text-align: left;
 	}
@@ -316,10 +307,6 @@ input, select, textarea {
 	code {
 		background: rgba(220, 220, 220, 0.25);
 		border-color: #eeeeee;
-	}
-
-	hr {
-		border-bottom-color: #eeeeee;
 	}
 
 /* Row */
@@ -3344,10 +3331,6 @@ input, select, textarea {
 			border-color: #ffffff;
 		}
 
-		#intro hr {
-			border-bottom-color: #ffffff;
-		}
-
 		#intro input[type="submit"],
 		#intro input[type="reset"],
 		#intro input[type="button"],
@@ -3552,11 +3535,7 @@ input, select, textarea {
 			background: rgba(255, 255, 255, 0.075);
 			border-color: #ffffff;
 		}
-
-		#header hr {
-			border-bottom-color: #ffffff;
-		}
-
+		
 		#header .logo {
 			-moz-transition: border-color 0.2s ease-in-out, color 0.2s ease-in-out, opacity 0.5s ease, -moz-transform 0.5s ease, visibility 0.5s;
 			-webkit-transition: border-color 0.2s ease-in-out, color 0.2s ease-in-out, opacity 0.5s ease, -webkit-transform 0.5s ease, visibility 0.5s;
@@ -3674,10 +3653,6 @@ input, select, textarea {
 			border-color: #ffffff;
 		}
 
-		#nav hr {
-			border-bottom-color: #ffffff;
-		}
-
 		#nav ul.links {
 			display: -moz-flex;
 			display: -webkit-flex;
@@ -3765,8 +3740,7 @@ input, select, textarea {
 	}
 
 		#main > * {
-			padding: 4rem 4rem 2rem 4rem ;
-			border-top: solid 2px #eeeeee;
+			padding: 0 4rem 0 4rem ;
 			margin: 0;
 		}
 
