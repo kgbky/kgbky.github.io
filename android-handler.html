@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>羽毛的博客-Handler源码分析</title>
+	<link rel="stylesheet" href="assets/css/article.css" />
+	<link rel="stylesheet" href="assets/css/highlightandroidstudio.css">
+	<script src="assets/js/highlight.pack.js"></script>
+</head>
+
+<body>
+
+	<script>
+		hljs.initHighlightingOnLoad();
+	</script>
+
+	<div id="main">
+		<nav>
+			<ul>
+				<li style="display: inline; font-size: 2rem;">
+					<img src="images/icon_home.png" alt="" style="vertical-align:middle">
+					<a href="index.html" style="text-decoration:none; padding-left: 6px;">首页</a>
+				</li>
+				<!-- <li style="display: inline; font-size: 2rem;"><a href="#">关于我</a></li> -->
+			</ul>
+		</nav>
+
+		<h1>handler源码分析</h1>
+
+		<p>Handler是面试中的常客。今天我们就来分析一下Handler源码。Handler在Android种的应用主要是线程间通信（本人遇到的情形），
+			但线程间通信有Rxjava等优秀的第三方库。所以Handler在平时工作上使用概率其实很低。这篇博客主要是面向面试。</p>
+
+
+		<br />
+
+		<h2>handler的使用</h2>
+
+		<p>第一种方式：</p>
+
+		<pre>
+			<code class="java">
+			// 创建Handler对象
+			handler = new Handler() {
+				@Override
+				public void handleMessage(@NonNull Message msg) {
+					Log.d(TAG, "handleMessage: " + msg.hashCode());
+				}
+			};
+	
+			// 发送消息
+			handler.sendMessage(new Message());
+			</code>
+		</pre>
+
+		<p>第二种方式：</p>
+
+		<pre>
+			<code class="java">
+			// 创建Handler对象
+			handler = new Handler();
+			// 发送消息
+			handler.post(new Runnable() {
+				@Override
+				public void run() {
+					Log.d(TAG, "runMessage: ");
+				}
+			});
+			</code>
+		</pre>
+
+		<P>第一种方式，通过sendMessage()发送消息，覆写Handler类的handleMessage()接受消息。第二种方式，通过post()方法发送消息。
+			第一种方式，创建了一个匿名内部类，该内部类会持有外部类的引用。导致内存泄漏。可以通过下面的方式来避免这种问题：</P>
+
+		<pre>
+				<code class="java">
+		static class IncomingHandler extends Handler {
+			//弱引用 JVM GC时会回收WeakReference包裹的对象
+			private final WeakReference&lt;Activity&gt; activityWeakReference;
+	
+			IncomingHandler(Activity activity) {
+				activityWeakReference = new WeakReferenc&lt;Activity&gt;(activity);
+			}
+	
+			@Override
+			public void handleMessage(Message msg) {
+				Activity activity = activityWeakReference.get();
+				// 一定不要忘了判断非空
+				if (activity != null) {
+					Log.d(TAG, "handleMessage: " + msg + activity.getPackageName());
+				}
+			}
+		}
+				</code>
+		</pre>
+
+		<P>静态内部类并不直接持有外部类的引用，通过WeakReference包裹Activity持有引用。当JVM GC时，activityWeakReference变量不会导致Activity不可回收。</P>
+
+		<pre>
+				<code class="java">
+			// 创建Handler对象
+			handler = new IncomingHandler(this);
+			// 发送消息,强烈推荐obtain()获取消息对象，内部有消息缓存池，效率高
+			handler.sendMessage(Message.obtain());
+				</code>
+		</pre>
+
+
+		<P>第二种方式，post()接收一个runnable对象，通过getPostMessage()方法封装成Message对象。之后传递消息的流程和sendMessage()是一致的。</P>
+
+		<pre>
+			<code class="java">
+		private static Message getPostMessage(Runnable r) {
+			Message m = Message.obtain();
+			m.callback = r;
+			return m;
+		}
+	
+		@UnsupportedAppUsage
+		private static Message getPostMessage(Runnable r, Object token) {
+			Message m = Message.obtain();
+			m.obj = token;
+			m.callback = r;
+			return m;
+		}
+			</code>
+		</pre>
+
+		<P>需要注意的是，使用post方式，handler接受到消息之后，会执行runnable中的代码。不再回调Handler的handleMessage()。
+			源码分析部分，会再深入理解。另外Handler还提供了removeCallbacks()方法，用来移除在消息队列中等待执行的Runnable。
+			当页面关闭时，可通过该方法移除不需要执行的Runnable。
+		</P>
+
+		<br />
+
+		<h2>handler源码分析</h2>
+
+		<br />
+
+		<h3>1、构造方法</h3>
+
+		<P>使用Handler从创建Handler对象开始。我们来看看Handler的构造方法做了那些工作。Handler的构造方法有好几个，通过查看源码，
+			我们会发现最终都走到了下面这两个方法：</P>
+
+		<pre>
+				<code class="java">
+		public Handler(@Nullable Handler.Callback callback, boolean async) {
+			......
+			
+			mLooper = Looper.myLooper();
+			if (mLooper == null) {
+				throw new RuntimeException(
+						"Can't create handler inside thread " + Thread.currentThread()
+								+ " that has not called Looper.prepare()");
+			}
+			mQueue = mLooper.mQueue;
+			mCallback = callback;
+			mAsynchronous = async;
+		}
+	
+		public Handler(@android.annotation.NonNull Looper looper, 
+						@Nullable Handler.Callback callback, boolean async) {
+			// Looper
+			mLooper = looper;
+			// MessageQueue 消息队列
+			mQueue = looper.mQueue;
+			// 回调，如果不为null，优先于Handler的handleMessage()执行
+			mCallback = callback;
+			// 消息处理是否异步
+			mAsynchronous = async;
+		}
+				</code>
+			</pre>
+
+		<P>我们可以发现，构造方法的功能就是初始化mLooper、mQueue、mCallback、mAsynchronous这4个对象。
+			mCallback类的定义如下：
+		</P>
+
+		<pre>
+			<code class="java">
+				/**
+				*实例化Handler时可以使用回调接口，以避免必须实现自己的Handler子类。
+				*/
+			   public interface Callback {
+				   /**
+					* @return True 如果不需要进一步处理
+					*/
+				   boolean handleMessage(@android.annotation.NonNull Message msg);
+			   }
+			</code>
+		</pre>
+
+		<P>这里我们展开说一下Handler分发消息得逻辑，随便把前面讲使用post发送runnable部分的坑填上。
+			Handler种分发消息时通过dispatchMessage(),源码如下：</P>
+
+		<pre>
+			<code class="java">
+			public void dispatchMessage(@NonNull Message msg) {
+				//优先级最高的 Message对象自带的runnable对象
+				if (msg.callback != null) {
+					handleCallback(msg);
+				} else {
+					// 第二优先级，初始化Handler时，可传入该对象。
+					if (mCallback != null) {
+						// return true, dispatchMessage方法执行完毕。 
+						// return false，继续调用Handler类的handleMessage()
+						if (mCallback.handleMessage(msg)) {
+							return;
+						}
+					}
+					// 优先级最低，Handler类的方法。
+					handleMessage(msg);
+				}
+			}
+
+			/**
+			* 执行runnable
+			*/
+			private static void handleCallback(Message message) {
+					message.callback.run();
+			}
+			</code>
+		</pre>
+
+		<p>看到这里，大家肯定会想dispatchMessage是何时调用的呢？这个问题稍后再讲，我们接下来分析一下mAsynchronous变量。
+			查看Handler构造方法我们发现，我们是无法设置该变量的值，而且Handler类内这个值都设置为false。查看构造方法的源码注释，
+			有如下内容：
+		</p>
+
+		<pre>
+			<code class="java">
+		/**
+		* @param async If true, the handler calls {@link Message#setAsynchronous(boolean)} for
+		* each {@link Message} that is sent to it or {@link Runnable} that is posted to it.
+		*/
+			</code>
+		</pre>
+
+		<P>如果这个值为true，那么Handler在接受到Message对象时，会调用Message对象的setAsynchronous(boolean)方法。
+			Handler的初始化到这里就结束了，下面我们来讲一讲handler是如何发送消息的。这里讲的比较粗糙的地方，后面会再补充。</P>
+
+
+		<br />
+
+		<H3>发送消息</H3>
+
+		<P>进入Handler的post或者sendMessage()方法，发现他们最后调用了下面两个方法：</P>
+
+		<pre>
+			<code class="java">
+		public boolean sendMessageAtTime(@NonNull Message msg, long uptimeMillis) {
+			// 构造方法中初始化的消息队列
+			MessageQueue queue = mQueue;
+			if (queue == null) {
+				RuntimeException e = new RuntimeException(
+						this + " sendMessageAtTime() called with no mQueue");
+				Log.w("Looper", e.getMessage(), e);
+				// 插入消息队列失败
+				return false;
+			}
+			return enqueueMessage(queue, msg, uptimeMillis);
+		}
+
+		private boolean enqueueMessage(@NonNull MessageQueue queue, @NonNull Message msg,
+				long uptimeMillis) {
+			// target 负责接收该消息的Handler对象
+			msg.target = this;
+
+			// 系统服务相关，不需要关心
+			msg.workSourceUid = ThreadLocalWorkSource.getUid();
+
+			// 构造方法中初始化，一直为false
+			if (mAsynchronous) {
+				msg.setAsynchronous(true);
+			}
+			return queue.enqueueMessage(msg, uptimeMillis);
+		}
+			</code>
+		</pre>
+
+		<P>再调用MessageQueue类的enqueueMessage(),把消息插入队列中。</P>
+
+		<pre>
+			<code class="java">
+		boolean enqueueMessage(Message msg, long when) {
+			......
+
+			synchronized (this) {
+				if (mQuitting) {
+					// 如果队列在退出中，日志打印警告。
+					IllegalStateException e = new IllegalStateException(
+							msg.target + 
+							" sending message to a Handler on a dead thread");
+					Log.w(TAG, e.getMessage(), e);
+					msg.recycle();
+					return false;
+				}
+	
+				......
+
+				Message p = mMessages;
+				boolean needWake;
+				if (p == null || when == 0 || when < p.when) {
+					// New head, wake up the event queue if blocked.
+					msg.next = p;
+					mMessages = msg;
+					needWake = mBlocked;
+				} else {
+					......
+					Message prev;
+					for (;;) {
+						prev = p;
+						p = p.next;
+						if (p == null || when < p.when) {
+							break;
+						}
+						if (needWake && p.isAsynchronous()) {
+							needWake = false;
+						}
+					}
+					msg.next = p;
+					prev.next = msg;
+				}
+	
+				......
+			}
+			return true;
+		}
+			</code>
+		</pre>
+
+		<P>只保留了关键代码，其他代码用......省略。阅读源码的时候看完发送消息的代码，我还是一头雾水。
+			队列是如何处理消息的呢？是如何回调Handler的handlerMessage()？我们来继续分析这问题。
+			这个问题该如何着手呢？在debug代码时，发现handleMessage存在如下调用栈：</P>
+
+		<a href="#"><img src="images/handler.jpg" alt="" style="text-align:center" /></a>
+
+		<P>点击不同的调用帧，我们发现ActivityThread类的main()有如下代码：</P>
+
+		<pre>
+			<code class="java">
+			public static void main(String[] args) {
+				......
+				Looper.prepareMainLooper();
+				......
+				Looper.loop();
+				throw new RuntimeException("Main thread loop unexpectedly exited");
+			}
+			</code>
+		</pre>
+
+		<P>主线程的Looper就是在这里初始化的。这里的main就是我们写java的那个main，是程序的入口。
+			main()调用了prepareMainLooper和loop方法。我们来看看他们做了哪些工作。
+		</P>
+
+		<pre>
+			<code class="java">
+		/**
+		* 将当前线程初始化为循环程序，将其标记为应用程序的主循环程序。
+		* 应用程序的主循环程序是由Android环境创建的，
+		* 因此您无需自己调用此函数。
+		*/
+		public static void prepareMainLooper() {
+			// 初始化Looper false 表示该Looper不可退出，一直存在
+			prepare(false);
+			synchronized (Looper.class) {
+				if (sMainLooper != null) {
+					throw new IllegalStateException
+					("The main Looper has already been prepared.");
+				}
+				// 获取挂载在当前线程的Looper
+				// prepareMainLooper在主线程调用
+				sMainLooper = myLooper();
+			}
+		}
+	
+		/**
+		* 在此线程中运行消息队列。确保调用
+		* quit（）结束循环。
+		*/
+		public static void loop() {
+			final Looper me = myLooper();
+			if (me == null) {
+				throw new RuntimeException
+				("No Looper; Looper.prepare() wasn't called on this thread.");
+			}
+			final MessageQueue queue = me.mQueue;
+	
+			......
+	
+			boolean slowDeliveryDetected = false;
+	
+			// 死循环处理消息
+			for (; ; ) {
+				Message msg = queue.next(); // might block
+				if (msg == null) {
+					// No message indicates that the message queue is quitting.
+					return;
+				}
+	
+				......
+	
+				try {
+					// msg.target 就是发送这个消息的Handler
+					msg.target.dispatchMessage(msg);
+					if (observer != null) {
+						observer.messageDispatched(token, msg);
+					}
+					dispatchEnd = needEndTime ? SystemClock.uptimeMillis() : 0;
+				} catch (Exception exception) {
+					if (observer != null) {
+						observer.dispatchingThrewException(token, msg, exception);
+					}
+					throw exception;
+				} finally {
+					ThreadLocalWorkSource.restore(origWorkSource);
+					if (traceTag != 0) {
+						Trace.traceEnd(traceTag);
+					}
+				}
+	
+				.....
+	
+				// 回收消息
+				msg.recycleUnchecked();
+			}
+		}
+			</code>
+		</pre>
+
+		<P>到这里，Handler发送消息流程中的各个节点我们都从源码角度分析过了。下面，我们从代码的执行顺序，来梳理一边源码，加深印象：</P>
+
+		<br />
+
+		<ul>
+			<li>当我们启动App时，JVM会初始化一个进程来加载ActivityThread类中的Main(),加载Main()的线程就是我们说的主线程。
+				在Main()中，为主进程初始化了Looper。用来处理消息。</li>
+			<li>接下来的就是调用Handler的构造方法，初始化Handler。</li>
+			<li>当我们通过Handler发送消息时，Handler内部最终调用了MessageQueue类的enqueueMessage(),把消息入列。
+				然后程序启动时初始化的Looper会处理该消息。通过调用Handler的dispatchMessage()分发给消息的处理者。
+			</li>
+		</ul>
+
+		<br />
+
+		<P>
+			到这里Handler的消息机制，已经分析完毕。当然，源码中有很多细节，我们没有讨论：mAsynchronous 同步屏障是如何工作的？
+			还有消息入列时的代码逻辑，我们也只是大致梳理。还有疑问的同学，请自行学习。
+		</P>
+
+
+		<br />
+
+		<P style="height: 200px;"></P>
+	</div>
+
+</body>
+
+</html>
