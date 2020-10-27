@@ -28,9 +28,13 @@
 
 		<h1>handler源码分析</h1>
 
-		<p>Handler是面试中的常客。今天我们就来分析一下Handler源码。Handler在Android种的应用主要是线程间通信（本人遇到的情形），
-			但线程间通信有Rxjava等优秀的第三方库。所以Handler在平时工作上使用概率其实很低。这篇博客主要是面向面试。</p>
+		<p>Handler是面试中的常客。今天我们就来分析一下Handler源码。Handler在Android中的应用主要是线程间通信（本人遇到的情形），
+			但线程间通信有Rxjava等优秀的第三方库。所以Handler在平时工作中使用概率其实很低。这篇博客主要是面向面试。</p>
 
+
+		<br />
+
+		<P style="color: red;">Ps：本次使用的源码是Android-29。</P>
 
 		<br />
 
@@ -49,7 +53,7 @@
 			};
 	
 			// 发送消息
-			handler.sendMessage(new Message());
+			handler.sendMessage(Message.obtain());
 			</code>
 		</pre>
 
@@ -75,7 +79,7 @@
 		<pre>
 				<code class="java">
 		static class IncomingHandler extends Handler {
-			//弱引用 JVM GC时会回收WeakReference包裹的对象
+			//弱引用 JVM GC时被WeakReference包裹的对象不会阻碍垃圾回收
 			private final WeakReference&lt;Activity&gt; activityWeakReference;
 	
 			IncomingHandler(Activity activity) {
@@ -94,7 +98,10 @@
 				</code>
 		</pre>
 
-		<P>静态内部类并不直接持有外部类的引用，通过WeakReference包裹Activity持有引用。当JVM GC时，activityWeakReference变量不会导致Activity不可回收。</P>
+		<P>静态内部类并不直接持有外部类的引用，通过WeakReference包裹Activity持有引用。
+			当JVM GC时，activityWeakReference变量不会导致Activity不可回收。
+			需要注意的是，如果Activity还被其他变量强引用，Activity是不会被回收的。
+		</P>
 
 		<pre>
 				<code class="java">
@@ -178,20 +185,20 @@
 
 		<pre>
 			<code class="java">
+			/**
+			*实例化Handler时可以使用回调接口，以避免必须实现自己的Handler子类。
+			*/
+			public interface Callback {
 				/**
-				*实例化Handler时可以使用回调接口，以避免必须实现自己的Handler子类。
+				* @return True 如果不需要进一步处理
 				*/
-			   public interface Callback {
-				   /**
-					* @return True 如果不需要进一步处理
-					*/
-				   boolean handleMessage(@android.annotation.NonNull Message msg);
-			   }
+				boolean handleMessage(@android.annotation.NonNull Message msg);
+			}
 			</code>
 		</pre>
 
-		<P>这里我们展开说一下Handler分发消息得逻辑，随便把前面讲使用post发送runnable部分的坑填上。
-			Handler种分发消息时通过dispatchMessage(),源码如下：</P>
+		<P>这里我们展开说一下Handler分发消息得逻辑，顺便把前面讲使用post发送runnable部分的坑填上。
+			Handler内部通过dispatchMessage()分发消息,源码如下：</P>
 
 		<pre>
 			<code class="java">
@@ -242,7 +249,7 @@
 
 		<br />
 
-		<H3>发送消息</H3>
+		<H3>2、发送消息</H3>
 
 		<P>进入Handler的post或者sendMessage()方法，发现他们最后调用了下面两个方法：</P>
 
@@ -428,28 +435,164 @@
 			</code>
 		</pre>
 
-		<P>到这里，Handler发送消息流程中的各个节点我们都从源码角度分析过了。下面，我们从代码的执行顺序，来梳理一边源码，加深印象：</P>
+		<P>到这里，Handler发送消息流程中的各个节点我们都从源码角度分析过了。下面，我们从代码的执行顺序，来梳理一遍整个流程，加深印象：</P>
 
 		<br />
 
 		<ul>
-			<li>当我们启动App时，JVM会初始化一个进程来加载ActivityThread类中的Main(),加载Main()的线程就是我们说的主线程。
-				在Main()中，为主进程初始化了Looper。用来处理消息。</li>
+			<li>当我们启动App时，JVM启动了一个进程，这个进程中的一个线程会加载ActivityThread类中的Main(),
+				加载Main()的线程就是我们说的主线程。在Main()中，为主进程初始化了Looper。用来处理消息。</li>
 			<li>接下来的就是调用Handler的构造方法，初始化Handler。</li>
-			<li>当我们通过Handler发送消息时，Handler内部最终调用了MessageQueue类的enqueueMessage(),把消息入列。
+			<li>当我们通过Handler发送消息(Message类)时，Handler内部最终调用了MessageQueue类的enqueueMessage(),把消息入列。
 				然后程序启动时初始化的Looper会处理该消息。通过调用Handler的dispatchMessage()分发给消息的处理者。
 			</li>
 		</ul>
 
 		<br />
 
-		<P>
-			到这里Handler的消息机制，已经分析完毕。当然，源码中有很多细节，我们没有讨论：mAsynchronous 同步屏障是如何工作的？
-			还有消息入列时的代码逻辑，我们也只是大致梳理。还有疑问的同学，请自行学习。
-		</P>
+		<h3>
+			Message类
+		</h3>
 
+		<P>Message表示一个消息，该类内部提供了各种属性和方法，用来设置数据，这部分不复杂，自行查看源码即可。下面贴的是稍微复杂些的：</P>
+
+		<pre>
+			<code class="java">
+				//负责接收该Message的 Handler
+				Handler target;
+				//下一个Message对象，通过节点实现链表
+				Message next;
+				//Message缓存池，链表结构，保存链表头，就可遍历整个链表
+				private static Message sPool;
+				//Message缓存池 内Message的数量
+				private static int sPoolSize = 0;
+				//Message缓存池最大容量
+				private static final int MAX_POOL_SIZE = 50;
+			</code>
+		</pre>
+
+		<h3>
+			MessageQueue类
+		</h3>
+
+		<pre>
+			<code class="java">
+			//如果可以退出消息队列，则为true。
+			private final boolean mQuitAllowed;
+
+			//队列头，基于节点的数据结构。保存队列头，就可遍历整个队列
+			Message mMessages;
+
+			boolean enqueueMessage(Message msg, long when){
+				......
+		
+				synchronized (this) {
+					//true 表示正在退出
+					if (mQuitting) {
+						IllegalStateException e = new IllegalStateException(
+								msg.target + " sending message to a Handler on a dead thread");
+						Log.w(TAG, e.getMessage(), e);
+						msg.recycle();
+						return false;
+					}
+		
+					......
+		
+					Message p = mMessages;
+					boolean needWake;
+					if (p == null || when == 0 || when &lt; p.when) {
+						// 消息插入队列头部
+						// New head, wake up the event queue if blocked.
+						msg.next = p;
+						mMessages = msg;
+						needWake = mBlocked;
+					} else {
+						// 消息插入队列中间。
+						needWake = mBlocked && p.target == null && msg.isAsynchronous();
+		
+						Message prev;
+						for (;;) {
+							prev = p;//msg 的前一个节点
+							p = p.next;// msg 的后一个节点
+							//如果后面没有更多消息 或者 msg执行时间在p之前 跳出
+							if (p == null || when &lt; p.when) {
+								break;
+							}
+							......
+						}
+		
+						msg.next = p;
+						prev.next = msg;
+					}
+					......
+				}
+				return true;
+			}
+		
+			Message next() {
+				......
+				for (;;) {
+					......
+					synchronized (this) {
+						Message prevMsg = null;
+						Message msg = mMessages;
+						if (msg != null && msg.target == null) {
+							// Stalled by a barrier.  Find the next asynchronous message in the queue.
+							do {
+								prevMsg = msg;
+								msg = msg.next;
+							} while (msg != null && !msg.isAsynchronous());
+						}
+						if (msg != null) {
+							if (now &lt; msg.when) {
+								// Next message is not ready.  Set a timeout to wake up when it is ready.
+								nextPollTimeoutMillis = (int) Math.min(msg.when - now, Integer.MAX_VALUE);
+							} else {
+								// Got a message.
+								mBlocked = false;
+								if (prevMsg != null) {
+									prevMsg.next = msg.next;
+								} else {
+									mMessages = msg.next;
+								}
+								msg.next = null;
+								......
+								return msg;
+							}
+						} else {
+							// No more messages.
+						}
+					}
+					......
+				}
+			}
+			</code>
+		</pre>
+
+		<P>
+			mQuitAllowed字段只在初始化主线程MessageQueue时为false。
+			enqueueMessage()会把Message按时间升序排列。
+			next()取出队列中的第一个元素。一般情况下遵循先进先出的顺序处理消息。
+			注意if (msg != null && msg.target == null) 同步屏障。通过postSyncBarrier()发送屏障，屏障是一个msg.target==null的message。
+			开启了同步屏障，MessageQueue中的异步消息会被先执行。
+			注意调用removeSyncBarrier()移除屏障。
+		</P>
+		
+		<br />
+		
+		<h3>
+			Looper类 & Handler类
+		</h3>
+
+		<p>
+			Looper类的核心方法就是prepare() 和 loop()。Handler类主要是构造方法和各种Send方法。这部分相对简单，上面也已经分析过，这里不再展开。
+		</p>
 
 		<br />
+
+		<P>
+			到这里Handler的消息机制，已经分析完毕。当然，源码中还有很多细节，没有展开。如果还有疑问的同学，请自行学习。
+		</P>
 
 		<P style="height: 200px;"></P>
 	</div>
