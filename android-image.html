@@ -29,10 +29,18 @@
 		<h1>Andoid图片格式选择</h1>
 		<h2>1、结论：</h2>
 		<p>
-			参考下图理解，先说结论：在平时开发中优先使用WebP,在兼容低版本Android系统时，对于图片比较简单且不需要支持透明通道的图片使用JPG，其他情况下选择PNG。
+			参考下图理解，先说结论：优先使用 SVG,搭配支持库使用可兼容至Android 7；
+			对于细节比较多，不适用 SVG 格式的图片（例如：应用启动图标 和 开屏页 背景图），优先使用 WebP（Android>=14,支持有损压缩。Android>=18,支持无损且透明的图片）；
+			如果Android版本较低，不支持WebP，对于图片比较简单且不需要支持透明通道的图片使用JPG，其他情况下选择PNG。
 		</p>
 
+		<br />
+
 		<img src="images/decisions.png" alt="" style="display: block; height: auto; width: 60%;margin: auto;">
+
+		<br />
+
+		<P>举个栗子：我们公司的项目 minSdkVersion 为 19，搭配支持库使用，完全兼容SVG 和 WebP格式。所以，最优选择是：SVG + 少量WebP。</P>
 
 		<br />
 
@@ -45,20 +53,30 @@
 			<li>PNG：支持无损压缩和透明通道</li>
 			<li>Gif：动图，无损压缩，因其体积小而成像相对清晰，因此使用广泛</li>
 			<li>WebP：Google开发的一种图片格式，压缩效果优于JPG和PNG。Android>=14,支持有损压缩。Android>=18,支持无损且透明的图片。</li>
-
-			<li><a href="https://zh.wikipedia.org/wiki/%E5%8F%AF%E7%B8%AE%E6%94%BE%E5%90%91%E9%87%8F%E5%9C%96%E5%BD%A2"
+			<li>SVG：<a href="https://zh.wikipedia.org/wiki/%E5%8F%AF%E7%B8%AE%E6%94%BE%E5%90%91%E9%87%8F%E5%9C%96%E5%BD%A2"
 					; style="color: blue;">
-					SVG：基于可扩展标记语言（XML），用于描述二维矢量图形的图形格式。SVG由W3C制定，是一个开放标准。——维基百科。</a>个人觉得SVG的普适性不是很好，在项目中并没有使用SVG图片。
-
-				<P>优点：缩放自由且不会降低图片质量，完美适配于任何分辨率的屏幕；用xml描述，文件小。
-					缺点：初次加载矢量图会耗费更多 CPU 周期，之后，和PNG图片的内存用量和性能相当；不适合包含很多细节的图片，例如：启动图标。
-					另外，google建议矢量图片限制为最大 200 x 200 dp，否则，绘制所需的时间可能会太长。</P>
+					基于可扩展标记语言（XML），用于描述二维矢量图形的图形格式。SVG由W3C制定，是一个开放标准。——维基百科。</a>			
 			</li>
 		</ul>
 
+		<br>
+
+		<h2>3、SVG简介</h2>
+
+		<P>Android > 20 支持矢量图形。使用 Support 或 AndroidX 支持库。可以兼容至Android 7。</P>
+
+		<P>优点：缩放自由且不会降低图片质量，完美适配于任何分辨率的屏幕；用xml描述，文件小。</P>
+
+		<P>缺点：初次加载矢量图会耗费更多 CPU 周期，之后，和PNG图片的内存用量和性能相当。</P>
+
+		<P>
+			SVG不适合包含很多细节的图片，例如：启动图标,对于这些图标推荐使用WebP格式。
+			google建议矢量图片限制为最大 200 x 200 dp，否则，绘制所需的时间可能会太长。
+		</P>
+		
 		<br />
 
-		<h2>3、将图片转换为 WebP 格式</h2>
+		<h2>4、将图片转换为 WebP 格式</h2>
 
 		<p>Android studio 可以将PNG、JPG图片装换为WebP格式。您可以装换单张图片，也可以装换包含多张图片的文件夹。具体步骤如下：</p>
 
@@ -98,7 +116,7 @@
 
 		<br />
 
-		<h2>4、将 WebP 图片转换为 PNG 格式</h2>
+		<h2>5、将 WebP 图片转换为 PNG 格式</h2>
 
 		<ol>
 			<li style="margin: 12px 50px 12px 50px;">在 Android Studio 中右键点击相应 WebP 图片，然后点击 <strong>Convert to
