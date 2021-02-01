@@ -53,9 +53,10 @@
 			<li>PNG：支持无损压缩和透明通道</li>
 			<li>Gif：动图，无损压缩，因其体积小而成像相对清晰，因此使用广泛</li>
 			<li>WebP：Google开发的一种图片格式，压缩效果优于JPG和PNG。Android>=14,支持有损压缩。Android>=18,支持无损且透明的图片。</li>
-			<li>SVG：<a href="https://zh.wikipedia.org/wiki/%E5%8F%AF%E7%B8%AE%E6%94%BE%E5%90%91%E9%87%8F%E5%9C%96%E5%BD%A2"
+			<li>SVG：<a
+					href="https://zh.wikipedia.org/wiki/%E5%8F%AF%E7%B8%AE%E6%94%BE%E5%90%91%E9%87%8F%E5%9C%96%E5%BD%A2"
 					; style="color: blue;">
-					基于可扩展标记语言（XML），用于描述二维矢量图形的图形格式。SVG由W3C制定，是一个开放标准。——维基百科。</a>			
+					基于可扩展标记语言（XML），用于描述二维矢量图形的图形格式。SVG由W3C制定，是一个开放标准。——维基百科。</a>
 			</li>
 		</ul>
 
@@ -65,15 +66,45 @@
 
 		<P>Android > 20 支持矢量图形。使用 Support 或 AndroidX 支持库。可以兼容至Android 7。</P>
 
-		<P>优点：缩放自由且不会降低图片质量，完美适配于任何分辨率的屏幕；用xml描述，文件小。</P>
+		<P style="margin-left: 40px;">优点：缩放自由且不会降低图片质量，完美适配于任何分辨率的屏幕；用xml描述，文件小。</P>
 
-		<P>缺点：初次加载矢量图会耗费更多 CPU 周期，之后，和PNG图片的内存用量和性能相当。</P>
+		<P style="margin-left: 40px;">缺点：初次加载矢量图会耗费更多 CPU 周期，之后，和PNG图片的内存用量和性能相当。</P>
 
 		<P>
-			SVG不适合包含很多细节的图片，例如：启动图标,对于这些图标推荐使用WebP格式。
+			SVG不适合包含很多细节的图片。例如：启动图标，对于这些图标推荐使用WebP格式。
 			google建议矢量图片限制为最大 200 x 200 dp，否则，绘制所需的时间可能会太长。
 		</P>
+
+		<br>
+
+		<P>Android studio 中的 Vector Asset studio 支持您导入SVG和PSD文件，用于生成矢量图。<a
+			href="https://developer.android.com/studio/write/vector-asset-studio?hl=zh-cn#running" ;
+			style="color: blue;">详细导入教程请点击这里</a>
+		</P>
+
+		<br>
+
+		<P>SVG使用示例：</P>
+
+		<pre>
+			<code class="java">
+			//使用了支持库
+			app:srcCompat="@drawable/ic_build_black_24dp"//引用svg格式的图片
+			app:tint="@android:color/holo_red_light"//设置图标的颜色
 		
+			//未使用支持库
+			android:src="@drawable/ic_build_black_24dp" 
+			android:tint="@android:color/holo_red_light"
+
+			//在java中使用
+			Drawable drawable = res.getDrawable(R.drawable.mySVG, getTheme());
+			</code>
+		</pre>
+
+		<P>想要了解更多关于 SVG 知识的同学，<a
+			href="https://developer.android.com/studio/write/vector-asset-studio?hl=zh-cn" ;
+			style="color: blue;">请点这里，官网教程</a></P>
+
 		<br />
 
 		<h2>4、将图片转换为 WebP 格式</h2>

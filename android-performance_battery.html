@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>羽毛的博客-Andoid性能优化之电池续航</title>
+	<link rel="stylesheet" href="assets/css/article.css" />
+	<link rel="stylesheet" href="assets/css/highlightandroidstudio.css">
+	<script src="assets/js/highlight.pack.js"></script>
+</head>
+
+<body>
+
+	<script>
+		hljs.initHighlightingOnLoad();
+	</script>
+
+	<div id="main">
+		<nav>
+			<ul>
+				<li style="display: inline; font-size: 2rem;">
+					<img src="images/icon_home.png" alt="" style="vertical-align:middle">
+					<a href="index.html" style="text-decoration:none; padding-left: 6px;">首页</a>
+				</li>
+				<!-- <li style="display: inline; font-size: 2rem;"><a href="#">关于我</a></li> -->
+			</ul>
+		</nav>
+
+		<h1>Andoid性能优化之电池续航</h1>
+		<p>
+			没电的设备完全无法使用。因此，考虑电池的续航时间是至关重要的。尤其是对于很多时候连接不到充电设备的移动设备。
+			为了使应用保持节能，有以下三点需要注意：
+		</p>
+
+		<ul style="margin-left: 4%;">
+			<li>让应用变得“偷懒至上”。</li>
+			<li>充分利用管理应用耗电量的Android系统功能</li>
+			<li>使用可帮助您找出耗电源头的工具</li>
+		</ul>
+
+		<br>
+
+		<h2>1、偷懒至上</h2>
+
+		<p>在使用cpu、网络和屏幕时，请考虑下面这些建议。他们可以很好地减少耗电量。</p>
+
+		<ul style="margin-left: 4%;">
+			<li><strong>减少操作：</strong>应用是否有可以删除的操作？例如：使用缓存的已下载数据，而不是反复请求接口。</li>
+			<li><strong>推迟操作：</strong>应用是否需要立即执行某个操作？例如：是否可以等到设备充电后再上传数据到服务器。</li>
+			<li><strong>合并操作：</strong>任务批处理，而不是多次将设备处于活动状态？</li>
+		</ul>
+
+		<br />
+
+		<P>为了实现这些目标，Android 平台提供了多个功能，帮助（或者说强制）开发者优化应用耗电。</P>
+
+		<br />
+
+		<h2>2、平台功能</h2>
+			<ul style="margin-left: 4%;">
+				<li>低电耗模式和应用待机模式</li>
+				<li>应用待机存储分区</li>
+				<li>后台限制</li>
+				<li>电源管理限制</li>
+			</ul>
+
+		<br />
+
+		<h2>3、工具</h2>
+
+		<P style="height: 200px;"></P>
+	</div>
+
+</body>
+
+</html>

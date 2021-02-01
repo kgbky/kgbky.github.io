@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>羽毛的博客-Andoid性能优化之进程和线程</title>
+	<link rel="stylesheet" href="assets/css/article.css" />
+	<link rel="stylesheet" href="assets/css/highlightandroidstudio.css">
+	<script src="assets/js/highlight.pack.js"></script>
+</head>
+
+<body>
+
+	<script>
+		hljs.initHighlightingOnLoad();
+	</script>
+
+	<div id="main">
+		<nav>
+			<ul>
+				<li style="display: inline; font-size: 2rem;">
+					<img src="images/icon_home.png" alt="" style="vertical-align:middle">
+					<a href="index.html" style="text-decoration:none; padding-left: 6px;">首页</a>
+				</li>
+				<!-- <li style="display: inline; font-size: 2rem;"><a href="#">关于我</a></li> -->
+			</ul>
+		</nav>
+
+		<h1>Andoid性能优化之进程和线程</h1>
+
+		<h2>1、进程</h2>
+
+		<P>默认情况下，一个应用中的所有组件都在相同的 Linux 进程中运行，且大多数应用都不应改变这一点。
+			但是，如果需要控制某个组件所属的进程，可执行如下操作：通过 android:process 属性可设置组件(Android四大组件)在那个进程中运行。</P>
+
+		<br>
+
+		<P>当内存不足时，Android 可能会在某一个时刻关闭某个进程，进程内的应用组件也随之被关闭。当这些组件需要再次运行时，系统会为其重启进程。
+			进程间通信：可使用 bindService() Or ContentProvider
+		</P>
+
+		<br>
+
+		<h2>2、线程</h2>
+
+		<P>应用启动时，Android 会为其创建一个名称为 Main（主线程）的执行线程。该进程负责界面绘制 & 响应用户操作。
+			当该线程被阻塞，用户会感到卡顿，甚至ANR。此外，Android 界面工具包并非线程安全工具包。所以开发中不得通过其他线程操作UI。
+			所以，Android 的单线程模式必须遵守两条规则：</P>
+
+		<P style="margin-left: 40px;">1、不要阻塞 UI 线程。阻塞超过5秒，显示ANR对话框。</P>
+
+		<P style="margin-left: 40px;">2、不要在 UI 线程之外访问 Android UI 工具包</P>
+
+		<br>
+
+		<P>PS:代码上其实可以绕开主线程修改UI，但是强烈不建议这么做，这是一个错误的实践。</P>
+
+		<br>
+
+		<P>可能被多个线程使用的方法，必须实现为线程安全方法。例如 ContentProvider 的 query()、insert()、delete()、update() 和 getType() 方法。</P>
+
+		<br>
+
+		<h2>3、工作线程（子线程）</h2>
+
+		<P>为什么要使用子线程：保证主线程的流畅渲染和快速响应用户输入。把冗长的任务放在子线程。只有保证每秒 60 帧，用户才不会感到卡顿。</P>
+
+		<br>
+
+		<P>Android 视图对象不是线程安全的。无论是创建、使用还是销毁界面对象，应用都应在主线程上完成。这意味着开发者应制定允许多个子线程将工作结果传回主线程的通道。
+		需要注意的是，子线程不能包含对UI（View、Fragment、Activity）的引用，极易引起内存泄漏。
+		</P>
+
+		<ol style="margin-left: 40px;">
+			<li>子线程显示引用View导致的内存泄漏
+				<ul>
+					<li style="margin-left: 40px;">工作线程完成之前，view已从视图中移除，子线程的显示引用导致View内存泄漏。系统会在对象引用消失后回收该对象。</li>
+					<li style="margin-left: 40px;">还是上面的情况，如果View包含对Activity 的引用，则该Activity需要等到子线程工作完毕才能被回收</li>
+					<li style="margin-left: 40px;">在工作线程的执行过程中，如果屏幕旋转，这种情况可能导致内存中有两个Activity对象</li>
+				</ul>
+			</li>
+			<li>子线程隐式引用View导致的内存泄漏
+				<ul>
+					<li>匿名内部类，默认持有外部类的引用。当内部类为工作线程时，可能导致Activity的销毁出现延迟，进而给内存带来更多压力。
+					此问题的直接解决方法是将内部类定义为静态类，或在其自己的文件中定义，从而移除隐式引用。或者 通过 WeakReference 包裹引用的外部类对象</li>
+				</ul>
+			</li>
+		</ol>
+
+		<p>尽管在软件层面，我们的代码可以创建数百个线程，但这会导致性能问题。CPU实际上只能并行处理少量线程，线程过多会导致系统调度问题。
+			还需要考虑到线程不是免费的，它们会占用内存。每个线程至少需要占用 64k 内存。为了更好的使用线程，我们可以在应用中创建一个线程池，
+			或者复用（第三库 或 系统的）线程池，从而提高性能。
+		</p>
+
+		<br>
+
+		<P style="height: 200px;"></P>
+	</div>
+
+</body>
+
+</html>
