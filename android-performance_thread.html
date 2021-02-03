@@ -61,14 +61,68 @@
 
 		<br>
 
+		<h3>线程优先级</h3>
+
+		<P>在应用中创建和管理线程时，Google 强烈建议设置线程的优先级。通过使用 android.os.Process 类的 setThreadPriority() 来明确调整线程优先级。 </P>
+
+		<pre>
+			<code class="java">
+		private static class MyThread extends Thread {
+
+			private final int tid;
+	
+			public MyThread() {
+				super();
+				tid = Process.myTid();
+				//设置 调用该方法的线程 的优先级
+				Process.setThreadPriority(THREAD_PRIORITY_BACKGROUND);
+			}
+	
+			@Override
+			public void run() {
+				while (true) {
+					try {
+						Thread.sleep(600);
+						System.out.println("doing" + Process.getThreadPriority(tid));
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+	
+		}
+			</code>
+		</pre>
+
+		<P>
+			默认情况下，系统会将线程的优先级设置为与生成它的线程具有相同的优先级。主线程的优先级默认为 THREAD_PRIORITY_VIDEO = -10 。
+			在主线程中创建的线程，如果没有设置过优先级，其优先级和主线程一致都为-10。
+		</P>
+
+		<br>
+
+		<P>
+			绝大多数情况下子线程的优先级绝不能高于主线程。子线程优先级过高，可能干扰主线程，导致应用掉帧。太低，可能导致异步任务（例如图片加载）达不到所需的速度。
+			如需了解更多内容，请参阅 android.os.Process 类源码。
+		</P>
+
+		<br>
+
 		<h2>3、工作线程（子线程）</h2>
 
 		<P>为什么要使用子线程：保证主线程的流畅渲染和快速响应用户输入。把冗长的任务放在子线程。只有保证每秒 60 帧，用户才不会感到卡顿。</P>
 
 		<br>
 
+		<P>
+			根据开发经验，执行时间超过200ms的方法就要考虑放到子线程执行。因为实际开发中，总是大量方法一起调用，导致CPU处理时间快速累加。
+			影响界面的流畅渲染(一帧渲染时间超过16毫秒)。应用甚至出现明显的卡顿。
+		</P>
+
+		<br>
+
 		<P>Android 视图对象不是线程安全的。无论是创建、使用还是销毁界面对象，应用都应在主线程上完成。这意味着开发者应制定允许多个子线程将工作结果传回主线程的通道。
-		需要注意的是，子线程不能包含对UI（View、Fragment、Activity）的引用，极易引起内存泄漏。
+			需要注意的是，子线程不能包含对UI（View、Fragment、Activity）的引用，极易引起内存泄漏。
 		</P>
 
 		<ol style="margin-left: 40px;">
@@ -82,7 +136,7 @@
 			<li>子线程隐式引用View导致的内存泄漏
 				<ul>
 					<li>匿名内部类，默认持有外部类的引用。当内部类为工作线程时，可能导致Activity的销毁出现延迟，进而给内存带来更多压力。
-					此问题的直接解决方法是将内部类定义为静态类，或在其自己的文件中定义，从而移除隐式引用。或者 通过 WeakReference 包裹引用的外部类对象</li>
+						此问题的直接解决方法是将内部类定义为静态类，或在其自己的文件中定义，从而移除隐式引用。或者 通过 WeakReference 包裹引用的外部类对象</li>
 				</ul>
 			</li>
 		</ol>
