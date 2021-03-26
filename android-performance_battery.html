@@ -57,16 +57,37 @@
 		<br />
 
 		<h2>2、平台功能</h2>
-			<ul style="margin-left: 4%;">
-				<li>低电耗模式和应用待机模式</li>
-				<li>应用待机存储分区</li>
-				<li>后台限制</li>
-				<li>电源管理限制</li>
-			</ul>
+
+		<p>系统中包含延长电池续航时间的内部机制，开发者需要了解这些规则，以便开发更好，更稳定的应用。如需了解详情，请参阅：</p>
+
+		<ul style="margin-left: 4%;">
+			<li><a
+					href="https://developer.android.google.cn/training/monitoring-device-state/doze-standby">
+					低电耗模式和应用待机模式。这些限制在设备处于充电状态时不适用</a></li>
+			<li><a href="https://developer.android.google.cn/topic/performance/appstandby">
+					应用待机存储分区。这些限制在设备处于充电状态时不适用</a></li>
+			<li>
+				<a href="https://developer.android.google.cn/topic/performance/background-optimization#bg-restrict">
+					后台限制</a>
+			</li>
+			<li>
+				<a href="https://developer.android.google.cn/topic/performance/power/power-details">
+					电源管理限制。这些限制在设备处于充电状态时不适用</a>
+			</li>
+		</ul>
+
+		<br />
+
+		<P>和往常一样，最好在省电模式处于活动状态时测试您的应用。您可以依次转到<strong>设置 > 省电模式</strong>，手动开启省电模式。</P>
 
 		<br />
 
 		<h2>3、工具</h2>
+
+		<P>Android 提供了 Profile GPU Rendering 和 Battery Historian 工具来帮助开发者定位耗电问题。由于这部分内容，在开发和面试中使用到的概率无限趋近于0，这里不再讨论。
+			<a href="https://developer.android.google.cn/topic/performance/power" ; style="color: blue;">
+				感兴趣的小伙伴可以参考官网(不需要梯子)。</a>
+		</P>
 
 		<P style="height: 200px;"></P>
 	</div>
