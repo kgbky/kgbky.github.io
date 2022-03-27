@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>羽毛的博客-Git常用命令</title>
+	<link rel="stylesheet" href="assets/css/article.css" />
+	<link rel="stylesheet" href="assets/css/highlightandroidstudio.css">
+	<script src="assets/js/highlight.pack.js"></script>
+</head>
+
+<body>
+
+	<script>
+		hljs.initHighlightingOnLoad();
+	</script>
+
+	<div id="main">
+		<nav>
+			<ul>
+				<li style="display: inline; font-size: 2rem;">
+					<img src="images/icon_home.png" alt="" style="vertical-align:middle">
+					<a href="index.html" style="text-decoration:none; padding-left: 6px;">首页</a>
+				</li>
+				<!-- <li style="display: inline; font-size: 2rem;"><a href="#">关于我</a></li> -->
+			</ul>
+		</nav>
+
+		<h1>Git常用命令</h1>
+		<h2>1、git ignore配置</h2>
+		<p>
+			参考这个开源项目，<a href="https://github.com/github/gitignore">点我打开。</a>该项目维护了各个语言的 git ignore 配置。
+		</p>
+
+		<br />
+
+		<h2>2、git常用命令</h2>
+
+		<p>名词解释：工作区(代码编辑区)、暂存区(add 之后即放入暂存区)、本地仓库(commit之后代码放入本地仓库)、
+			远程仓库(服务器上的代码仓库)
+		</p>
+
+		<br />
+
+		<ul>
+			<li>新建代码库
+				<ul>
+					<li>在当前目录初始化仓库 <br> git init</li>
+					<li>新建一个目录，将其初始化为Git仓库 <br> git init [project-name]</li>
+					<li>下载远程仓库到本地 <br> git clone [url]</li>
+				</ul>
+			</li>
+
+			<li>配置
+				<ul>
+					<li>显示当前的Git配置 <br> git config --list</li>
+					<li>设置提交代码时的用户信息
+						<br> git config [--global] user.name "[name]"
+						<br> git config [--global] user.email "[email address]"
+					</li>
+				</ul>
+			</li>
+
+			<li>增加/删除文件
+				<ul>
+					<li>添加指定文件到暂存区 <br> git add [file1] [file2] ...</li>
+					<li>添加指定目录到暂存区，包括子目录 <br> git add [dir]</li>
+					<li>添加当前目录的所有文件到暂存区 <br> git add .</li>
+					<li>删除工作区文件，并且将这次删除放入暂存区 <br> git rm [file1] [file2] ...</li>
+					<li>改名文件，并且将这个改名放入暂存区 <br> git mv [file-original] [file-renamed]</li>
+				</ul>
+			</li>
+
+			<li>代码提交
+				<ul>
+					<li>提交暂存区到仓库区 <br> git commit -m [message]</li>
+					<li>提交暂存区的指定文件到仓库区 <br> git commit [file1] [file2] ... -m [message]</li>
+					<li>将add和commit合为一步 <br> git commit -am 'message'</li>
+					<li>提交工作区自上次commit之后的变化，直接到仓库区 <br> git commit -a</li>
+					<li>使用一次新的commit，替代上一次提交。如果代码没有任何新变化，则用来改写上一次commit的提交信息 <br> git commit --amend -m [message]</li>
+				</ul>
+			</li>
+
+			<li>分支
+				<ul>
+					<li>列出所有本地分支 <br> git branch</li>
+					<li>列出所有远程分支 <br> git branch -r</li>
+					<li>列出所有本地分支和远程分支 <br> git branch -a</li>
+					<li>新建一个分支，但依然停留在当前分支 <br> git branch [branch-name]</li>
+					<li>s新建一个分支，并切换到该分支 <br> git checkout -b [branch]</li>
+					<li>新建一个分支，与指定的远程分支建立追踪关系 <br> git branch --track [branch] [remote-branch]</li>
+					<li>切换到指定分支，并更新工作区 <br> git checkout [branch-name]</li>
+					<li>建立追踪关系，在现有分支与指定的远程分支之间 <br> git branch --set-upstream [branch] [remote-branch]</li>
+					<li>合并指定分支到当前分支 <br> git merge [branch]</li>
+					<li>删除分支 <br> git branch -d [branch-name]</li>
+					<li>删除远程分支
+						<br> git push origin --delete [branch-name]
+						<br> git branch -dr [remote/branch]
+					</li>
+					<li>从远程分支develop创建新本地分支devel并检出 <br> git checkout -b devel origin/develop</li>
+				</ul>
+			</li>
+
+			<li>标签
+				<ul>
+					<li>列出所有tag <br> git tag</li>
+					<li>新建一个tag在当前commit <br> git tag [tag]</li>
+					<li>新建一个tag在指定commit <br> git tag [tag] [commit]</li>
+					<li>删除本地tag <br> git tag -d [tag]</li>
+					<li>删除远程tag <br> git push origin :refs/tags/[tagName]</li>
+					<li>查看tag信息 <br> git show [tag]</li>
+					<li>提交指定tag <br> git push [remote] [tag]</li>
+					<li>提交所有tag <br> git push [remote] --tags</li>
+					<li>新建一个分支，指向某个tag <br> git checkout -b [branch] [tag]</li>
+				</ul>
+			</li>
+
+			<li>查看信息
+				<ul>
+					<li>显示有变更的文件 <br> git status</li>
+					<li>显示当前分支的版本历史 <br> git log</li>
+					<li>显示版本历史，以及每次commit发生变更的文件 <br> git log --stat</li>
+					<li>搜索提交历史，根据关键词 <br> git log -S [keyword]</li>
+					<li>显示某个文件的版本历史，包括文件改名
+						<br> git log --follow [file]
+						<br>git whatchanged [file]
+					</li>
+					<li>显示暂存区和工作区的差异 <br> git diff</li>
+					<li>显示暂存区和上一个commit的差异 <br> git diff --cached [file]</li>
+					<li>显示工作区与当前分支最新commit之间的差异 <br> git diff HEAD</li>
+				</ul>
+			</li>
+
+			<li>远程同步
+				<ul>
+					<li>下载远程仓库的所有变动 <br> git fetch [remote]</li>
+					<li>显示所有远程仓库 <br> git remote -v</li>
+					<li>显示某个远程仓库的信息 <br> git remote show [remote]</li>
+					<li>取回远程仓库的变化，并与本地分支合并 <br> git pull [remote] [branch]</li>
+					<li>上传本地指定分支到远程仓库 <br> git push [remote] [branch]</li>
+					<li>推送所有分支到远程仓库 <br> git push [remote] --all</li>
+				</ul>
+			</li>
+
+			<li>撤销
+				<ul>
+					<li>恢复暂存区的指定文件到工作区 <br> git checkout [file]</li>
+					<li>恢复某个commit的指定文件到暂存区和工作区 <br> git checkout [commit] [file]</li>
+					<li>恢复暂存区的所有文件到工作区 <br> git checkout .</li>
+					<li>重置暂存区与工作区，与上一次commit保持一致 <br> git reset --hard</li>
+					<li>重置当前分支的HEAD为指定commit，同时重置暂存区和工作区，与指定commit一致 <br> git reset --hard [commit]</li>
+					<li>新建一个commit，用来撤销指定commit <br> git revert [commit]</li>
+				</ul>
+			</li>
+
+			<li>stash
+				<ul>
+					<li>隐藏工作区和暂存区未commit的代码 <br> git stash</li>
+					<li>恢复被隐藏的代码 <br> git stash pop</li>
+					<li>查看所有暂存 <br> git stash list</li>
+				</ul>
+			</li>
+		</ul>
+
+		<P style="height: 200px;"></P>
+	</div>
+
+</body>
+
+</html>
