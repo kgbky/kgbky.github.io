@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>羽毛的博客-如何解决依赖冲突问题</title>
+    <link rel="stylesheet" href="assets/css/article.css" />
+    <link rel="stylesheet" href="assets/css/highlightandroidstudio.css">
+    <link rel="stylesheet" href="assets/css/jar_repeat.css">
+    <script src="assets/js/highlight.pack.js"></script>
+</head>
+
+<body>
+
+    <script>
+        hljs.initHighlightingOnLoad();
+    </script>
+
+    <div id="main">
+        <nav>
+            <ul>
+                <li style="display: inline; font-size: 2rem;">
+                    <img src="images/icon_home.png" alt="" style="vertical-align:middle">
+                    <a href="index.html" style="text-decoration:none; padding-left: 6px;">首页</a>
+                </li>
+                <!-- <li style="display: inline; font-size: 2rem;"><a href="#">关于我</a></li> -->
+            </ul>
+        </nav>
+
+        <h1>如何解决依赖冲突问题</h1>
+
+        <br />
+
+        <h2>一、现象</h2>
+        <p>
+            在Android开发过程中，经常会遇到依赖项冲突的问题。在build时，开发者会收到错误。例如下面的错误：
+        </p>
+
+        <p style="padding-left: 80px; padding-right: 80px;padding-top: 20px;padding-bottom: 20px; color: red;">All
+            com.android.support libraries must use the exact same version specification (mixing versions can lead to
+            runtime crashes)</p>
+
+        <p>这个Log的意思是：support 库必须使用相同的版本，混用不同版本会导致运行时奔溃。</p>
+
+        <br />
+
+        <h2>二、原因</h2>
+
+        <p>上面例子的错误是因为：两个模块使用相同 jar 包的不同版本。在实际开中 studio 提示的错误信息可能不一致，但只要是依赖项冲突问题。
+            都可以用下面的思路解决。</p>
+
+        <br />
+
+        <h2>三、解决方案</h2>
+
+        <h3>第一步：查找冲突的jar包</h3>
+
+        <p>在Android studio 的 Terminal 窗口输入gradlew :xxxx:dependencies --configuration releaseRuntimeClasspath
+            命令，查看module的<strong style="color:red;">依赖树</strong>。xxxx需要替换为module name。</p>
+
+        <img src="images/jar_tree.png" alt="" style="vertical-align:middle">
+
+        <h3>第二步：使用exclude排除重复的依赖项</h3>
+
+        <img src="images/jar_exclude.png" alt="" style="vertical-align:middle">
+
+        <p style="margin-top: 20px;">语法介绍：</p>
+
+        <ol>
+            <li>transitive = true | false。True表示依赖项会被递归分析并添加到宿主module。false，宿主module不会添加依赖项的子依赖项。默认为true。</li>
+            <li>maven格式是：
+                &lt;groupID&gt;:
+                &lt;artifactID&gt;:
+                &lt;version&gt;。module: 后跟的就是artifactID，可参考这篇文章：
+                <a href="https://www.jianshu.com/simple/upgrade" target="_blank">maven格式介绍</a>
+            </li>
+        </ol>
+
+        <br />
+
+        <h2>四、其他</h2>
+
+        <p>google建议指定依赖项时，不应使用动态版本号。如:</p>
+
+        <p style="padding-left: 80px; padding-right: 80px;padding-top: 20px;padding-bottom: 20px; color: red;">
+            'com.android.tools.build:gradle:3.+'。
+        </p>
+
+        <p> 使用此功能可能会导致意外的版本更新和难以解析版本差异。</p>
+
+        <P style="height: 200px;"></P>
+    </div>
+
+</body>
+
+</html>
